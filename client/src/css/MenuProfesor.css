@@ -1,0 +1,73 @@
+/* Estilos generales para el contenedor del menú */
+.menu-profesor {
+    position: fixed; /* fija el menú en la parte superior de la pantalla */
+    top: 0;
+    left: 0;
+    width: 100%;
+    background-color: #0095DD; /* Fondo del menú */
+    border-bottom: 1px solid #ddd;
+    z-index: 1000; /* asegura que el menú quede por encima del contenido */
+    font-size: 14px;
+}
+
+/* Estilos para el menú hamburguesa */
+.menu-profesor .hamburger {
+    display: none;
+    flex-direction: column;
+    cursor: pointer;
+}
+
+.menu-profesor .hamburger .bar {
+    width: 25px;
+    height: 3px;
+    background-color: white; /* Color de las barras del menú hamburguesa */
+    margin: 4px 0;
+    transition: all 0.3s ease;
+}
+
+.menu-profesor .hamburger .bar.open:nth-child(1) {
+    transform: rotate(-45deg) translate(-5px, 6px);
+}
+
+.menu-profesor .hamburger .bar.open:nth-child(2) {
+    opacity: 0;
+}
+
+.menu-profesor .hamburger .bar.open:nth-child(3) {
+    transform: rotate(45deg) translate(-5px, -6px);
+}
+
+/* Estilos para la lista de navegación */
+.menu-profesor ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+}
+
+.menu-profesor ul li {
+    color: white; /* Color del texto de los elementos del menú */
+    padding: 0px 20px;
+    cursor: pointer;
+}
+
+.menu-profesor ul li button {
+    color: white;
+}
+
+.menu-profesor ul li.active {
+    color: black; /* Color del texto para el elemento activo */
+    text-shadow: none; /* Eliminar cualquier sombra del texto */
+    text-decoration: none;
+}
+
+/* Estilos para la lista de navegación en estado abierto */
+.nav-links {
+    display: flex;
+}
+
+.nav-links.open {
+    display: block;
+}
+
+/* Media query para dispositivos móviles */

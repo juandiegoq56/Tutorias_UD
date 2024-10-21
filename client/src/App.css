@@ -1,0 +1,36 @@
+/* Estilos generales */
+body {
+  font-family: Arial, sans-serif;
+  margin: 0; /* elimina el margen por defecto del body */
+}
+
+.lista-tutorias {
+ 
+  margin-top: 70px; /* ajusta el margen superior para que no se superponga con el menú */
+  
+  
+  }
+
+.tutoria {
+  border: 1px solid #ddd;
+  padding: 10px;
+  margin-bottom: 10px;
+}
+
+.tutoria h2 {
+  margin: 0;
+  color: #333;
+}
+
+.tutoria p {
+  margin: 5px 0;
+  color: #666;
+}
+
+.tutor {
+  color: #007BFF;
+  font-weight: bold;
+  display: block;
+  text-align: right;
+}
+

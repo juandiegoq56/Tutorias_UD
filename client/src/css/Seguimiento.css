@@ -1,0 +1,57 @@
+/* SeguimientoTutorias.css */
+.custom-form {
+    
+    padding: 20px;
+    border-radius: 5px;
+    border: 1px solid #ddd;
+    display: flex;
+  }
+  
+  .custom-form label {
+    
+    margin-bottom: 5px;
+    margin-left: 10px;
+    font-weight: bold;
+    width: 90%;
+  }
+  
+  .custom-form select {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+  
+  .custom-form button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .custom-form button:hover {
+    background-color: #0056b3;
+  }
+ .pdf-preview{
+ width: 100%;
+  }
+  .filter-container{
+    display: flex;
+  }
+  @media only screen and (max-width: 768px) {
+    .filter-container{
+      display: flex;
+      flex-direction: column;
+    }
+    .filter-item:nth-child(n){
+        margin-left: 10px;
+      }
+  }
+  .filter-item:nth-child(n+2){
+    margin-left: 10px;
+  }
+  
