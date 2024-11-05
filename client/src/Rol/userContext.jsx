@@ -1,11 +1,12 @@
-import React, { useState, useEffect } from 'react';
+// userContext.js
+import React, { useState, useEffect, createContext, useContext } from 'react';
 
-const Context = React.createContext({});
+const UserContext = createContext({});
 
 export function UserContextProvider({ children }) {
   const [jwt, setJWT] = useState(localStorage.getItem('jwt') || null);
+  const [role, setRole] = useState(null);
 
-  // Guardar el JWT en localStorage cada vez que cambie
   useEffect(() => {
     if (jwt) {
       localStorage.setItem('jwt', jwt);
@@ -15,10 +16,12 @@ export function UserContextProvider({ children }) {
   }, [jwt]);
 
   return (
-    <Context.Provider value={{ jwt, setJWT }}>
+    <UserContext.Provider value={{ jwt, setJWT, role, setRole }}>
       {children}
-    </Context.Provider>
+    </UserContext.Provider>
   );
 }
 
-export default Context;
+export const useUserContext = () => useContext(UserContext);
+
+export default UserContext;

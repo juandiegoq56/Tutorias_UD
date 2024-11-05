@@ -236,7 +236,7 @@ exports.updateTutoring = (req, res) => {
       const updateMateria = () => {
         return new Promise((resolve, reject) => {
           const materiaQuery = `
-            INSERT INTO Materias (nombre, codigo, facultad, proyecto)
+            INSERT INTO materias (nombre, codigo, facultad, proyecto)
             VALUES (?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), facultad=VALUES(facultad), proyecto=VALUES(proyecto)
           `;
@@ -250,7 +250,7 @@ exports.updateTutoring = (req, res) => {
       const updateProfesor = () => {
         return new Promise((resolve, reject) => {
           const profesorQuery = `
-            INSERT INTO Profesores (codigo, nombre, apellido)
+            INSERT INTO profesores (codigo, nombre, apellido)
             VALUES (?, ?, ?)
             ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), apellido=VALUES(apellido)
           `;
@@ -266,7 +266,7 @@ exports.updateTutoring = (req, res) => {
           const linkTutoring = formData.link_tutoring || "N/A";
           const salonTutoring = formData.salon_tutoring || "N/A";
           const tutoriaQuery = `
-            UPDATE Tutorias
+            UPDATE tutorias
             SET titulo = ?, fecha = ?, horaInicio = ?, horaFin = ?, profesorCod = ?, materiaCod = ?, sede_salon = ?, link_reunion = ?, grupo = ?, descripcion = ?
             WHERE id = ?
           `;
@@ -291,16 +291,48 @@ exports.updateTutoring = (req, res) => {
 
       const updateEstudiantes = () => {
         return new Promise((resolve, reject) => {
-          const deleteSql = 'DELETE FROM TutoriasEstudiantes WHERE tutoriaId = ?';
+          const deleteSql = 'DELETE FROM tutoriasestudiantes WHERE tutoriaId = ?';
           connection.query(deleteSql, [tutoriaId], (err) => {
             if (err) return reject(err);
 
-            const studentValues = estudiantes.map(est => [tutoriaId, est.COD_ESTUDIANTE]);
-            const insertSql = 'INSERT INTO TutoriasEstudiantes (tutoriaId, estudianteCod) VALUES ?';
-            connection.query(insertSql, [studentValues], (err) => {
-              if (err) return reject(err);
-              resolve();
+            const promises = estudiantes.map(estudiante => {
+              return new Promise((resolveEstudiante, rejectEstudiante) => {
+                const estudianteNombres = estudiante.ESTUDIANTE.split(' ').slice(2).join(' ');
+                const estudianteApellidos = estudiante.ESTUDIANTE.split(' ').slice(0, 2).join(' ');
+
+                // Verificar si el estudiante ya existe en la tabla estudiantes
+                const checkEstudianteQuery = `SELECT 1 FROM estudiantes WHERE codigo = ?`;
+                connection.query(checkEstudianteQuery, [estudiante.COD_ESTUDIANTE], (err, results) => {
+                  if (err) return rejectEstudiante(err);
+
+                  // Si el estudiante no existe, lo insertamos
+                  const insertOrUpdateEstudiante = () => {
+                    return new Promise((resolveInsert, rejectInsert) => {
+                      if (results.length === 0) {
+                        const estudianteQuery = `INSERT INTO estudiantes (codigo, nombre, apellido) VALUES (?, ?, ?)`;
+                        connection.query(estudianteQuery, [estudiante.COD_ESTUDIANTE, estudianteNombres, estudianteApellidos], (err, result) => {
+                          if (err) return rejectInsert(err);
+                          resolveInsert();
+                        });
+                      } else {
+                        resolveInsert(); // El estudiante ya existe, no es necesario insertar
+                      }
+                    });
+                  };
+
+                  // Insertar al estudiante si no existe, luego crear la relación en tutoriasestudiantes
+                  insertOrUpdateEstudiante().then(() => {
+                    const tutoriaEstudianteQuery = `INSERT INTO tutoriasestudiantes (tutoriaId, estudianteCod) VALUES (?, ?)`;
+                    connection.query(tutoriaEstudianteQuery, [tutoriaId, estudiante.COD_ESTUDIANTE], (err, result) => {
+                      if (err) return rejectEstudiante(err);
+                      resolveEstudiante();
+                    });
+                  }).catch(rejectEstudiante);
+                });
+              });
             });
+
+            Promise.all(promises).then(resolve).catch(reject);
           });
         });
       };
@@ -326,6 +358,7 @@ exports.updateTutoring = (req, res) => {
     res.status(404).json({ error: "No se encontraron los datos para la tutoría solicitada." });
   }
 };
+
 
 exports.deleteTutoria = (req, res) => {
   const tutoriaId = req.params.id; 

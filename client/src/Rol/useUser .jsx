@@ -4,7 +4,7 @@ import UserContext from './userContext';
 import { jwtDecode } from 'jwt-decode';
 
 export default function useUser() {
-  const { setJWT } = useContext(UserContext);
+  const { setJWT, setRole } = useContext(UserContext); // Añade setRole para manejar el rol
   const { profesorId } = useParams();
   const navigate = useNavigate();
   const [isLogged, setIsLogged] = useState(Boolean(localStorage.getItem('jwt')));
@@ -14,7 +14,7 @@ export default function useUser() {
       console.log('Intentando iniciar sesión con profesorId:', profesorId);
 
       try {
-        const response = await fetch('http://192.168.0.46:3001/api/tutoring/login', {
+        const response = await fetch('http://localhost:3001/api/tutoring/login', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
@@ -30,8 +30,9 @@ export default function useUser() {
         console.log('Token recibido:', token);
         console.log('Rol recibido:', role);
 
-        localStorage.setItem('Rol', role);
         setJWT(token);
+        setRole(role); // Establece el rol en el contexto
+
         localStorage.setItem('jwt', token);
         
         setIsLogged(true);
@@ -40,8 +41,8 @@ export default function useUser() {
       } catch (error) {
         console.error('Error en el login:', error);
         setJWT(null);
+        setRole(null); // Limpia el rol en caso de error
         localStorage.removeItem('jwt');
-        localStorage.removeItem('Rol');
         window.location.href = 'https://estudiantes.portaloas.udistrital.edu.co/appserv/';
         setIsLogged(false);
       }
@@ -52,7 +53,7 @@ export default function useUser() {
     if (profesorId) {
       login(profesorId);
     }
-  }, [profesorId, setJWT, navigate]);
+  }, [profesorId, setJWT, setRole, navigate]);
 
   useEffect(() => {
     const checkTokenExpiration = () => {
@@ -66,16 +67,16 @@ export default function useUser() {
         if (decodedToken.exp < currentTime) {
           console.log('El token ha expirado');
           setJWT(null);
+          setRole(null);
           localStorage.removeItem('jwt');
-          localStorage.removeItem('Rol');
           setIsLogged(false);
           window.location.href = 'https://estudiantes.portaloas.udistrital.edu.co/appserv/';
         }
       } catch (error) {
         console.error('Error decodificando el token:', error);
         setJWT(null);
+        setRole(null);
         localStorage.removeItem('jwt');
-        localStorage.removeItem('Rol');
         setIsLogged(false);
         window.location.href = 'https://estudiantes.portaloas.udistrital.edu.co/appserv/';
       }
@@ -85,11 +86,12 @@ export default function useUser() {
     const intervalId = setInterval(checkTokenExpiration, 60000);
 
     return () => clearInterval(intervalId);
-  }, [setJWT, navigate]);
+  }, [setJWT, setRole, navigate]);
 
   const logout = () => {
     console.log('Cerrando sesión');
     setJWT(null);
+    setRole(null);
     localStorage.removeItem('jwt');
     setIsLogged(false);
     navigate('/login');

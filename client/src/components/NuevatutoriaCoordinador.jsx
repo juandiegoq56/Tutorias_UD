@@ -1,14 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import data from '../Data/datosEstructurados.json'; // Importa el archivo JSON
+import { useParams, useNavigate } from 'react-router-dom';
+import data from '../Data/datosEstructurados.json';
+import coordinadoresData from '../Data/coordinadorAdmin.json';
 import profesoresJson from '../Data/allOrganizedData.json';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../css/NuevaTutoria.css';
 
-const NuevaTutoria = () => {
-  const initialFormData = {
+const NuevaTutoriaCoordinador = () => {
+  const { profesorId } = useParams();
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
     name_tutoring: '',
-    facultad_tutoring: '',
     proyecto_tutoring: '',
     asignatura_tutoring: '',
     grupo_tutoring: '',
@@ -20,12 +23,9 @@ const NuevaTutoria = () => {
     fecha_tutoring: '',
     hora_inicio: '',
     hora_fin: ''
-  };
-
-  const [formData, setFormData] = useState(initialFormData);
-  const [facultades, setFacultades] = useState([]);
-  const [proyectos, setProyectos] = useState([]);
+  });
   const [asignaturas, setAsignaturas] = useState([]);
+  const [facultad, setFacultad] = useState('');
   const [grupos, setGrupos] = useState([]);
   const [profesores, setProfesores] = useState([]);
   const [linkError, setLinkError] = useState('');
@@ -35,112 +35,44 @@ const NuevaTutoria = () => {
   const [profesorHorario, setProfesorHorario] = useState([]);
 
   useEffect(() => {
-    if (data) {
-      const facultades = Object.keys(data);
-      setFacultades(facultades);
+    const coordinador = coordinadoresData.coordinadores[profesorId];
+    if (coordinador && coordinador.proyecto) {
+      setFormData(prev => ({
+        ...prev,
+        proyecto_tutoring: coordinador.proyecto
+      }));
+      buscarProyectoYFacultad(coordinador.proyecto);
     }
-  }, []);
-
-  useEffect(() => {
-    if (formData.facultad_tutoring && data?.[formData.facultad_tutoring]) {
-      const proyectos = Object.keys(data[formData.facultad_tutoring] || {});
-      setProyectos(proyectos);
+  }, [profesorId]);
   
-      setAsignaturas([]);
-      setGrupos([]);
-      setProfesores([]);
-      setEstudiantes([]);
-      setSelectedEstudiantes([]);
-      setFormData((prev) => ({
-        ...prev,
-        proyecto_tutoring: '',
-        asignatura_tutoring: '',
-        grupo_tutoring: '',
-        tutor_tutoring: ''
-      }));
-    } else {
-      setProyectos([]);
-      setAsignaturas([]);
-      setGrupos([]);
-      setProfesores([]);
-      setEstudiantes([]);
-      setSelectedEstudiantes([]);
-      setFormData((prev) => ({
-        ...prev,
-        proyecto_tutoring: '',
-        asignatura_tutoring: '',
-        grupo_tutoring: '',
-        tutor_tutoring: ''
-      }));
+  const buscarProyectoYFacultad = (nombreProyecto) => {
+    for (const [facultadNombre, proyectos] of Object.entries(data)) {
+      if (nombreProyecto in proyectos) {
+        setAsignaturas(Object.keys(proyectos[nombreProyecto]));
+        setFacultad(facultadNombre);
+        break;
+      }
     }
-  }, [formData.facultad_tutoring]);
-
-  useEffect(() => {
-    if (formData.proyecto_tutoring && formData.facultad_tutoring) {
-      const asignaturas = Object.keys(data?.[formData.facultad_tutoring]?.[formData.proyecto_tutoring] || {});
-      setAsignaturas(asignaturas);
+  };
   
-      setGrupos([]);
-      setProfesores([]);
-      setEstudiantes([]);
-      setSelectedEstudiantes([]);
-      setFormData((prev) => ({
-        ...prev,
-        asignatura_tutoring: '',
-        grupo_tutoring: '',
-        tutor_tutoring: ''
-      }));
-    } else {
-      setAsignaturas([]);
-      setGrupos([]);
-      setProfesores([]);
-      setEstudiantes([]);
-      setSelectedEstudiantes([]);
-      setFormData((prev) => ({
-        ...prev,
-        asignatura_tutoring: '',
-        grupo_tutoring: '',
-        tutor_tutoring: ''
-      }));
-    }
-  }, [formData.proyecto_tutoring, formData.facultad_tutoring]);
-
   useEffect(() => {
-    if (formData.asignatura_tutoring && formData.proyecto_tutoring && formData.facultad_tutoring) {
-      const gruposData = data?.[formData.facultad_tutoring]?.[formData.proyecto_tutoring]?.[formData.asignatura_tutoring] || [];
+    if (formData.asignatura_tutoring && formData.proyecto_tutoring && facultad) {
+      const gruposData = data[facultad]?.[formData.proyecto_tutoring]?.[formData.asignatura_tutoring] || [];
       const grupos = gruposData.map((item) => item.grupo);
       setGrupos(grupos);
-  
-      setProfesores([]);
-      setEstudiantes([]);
-      setSelectedEstudiantes([]);
-      setFormData((prev) => ({
-        ...prev,
-        grupo_tutoring: '',
-        tutor_tutoring: ''
-      }));
     } else {
       setGrupos([]);
-      setProfesores([]);
-      setEstudiantes([]);
-      setSelectedEstudiantes([]);
-      setFormData((prev) => ({
-        ...prev,
-        grupo_tutoring: '',
-        tutor_tutoring: ''
-      }));
     }
-  }, [formData.asignatura_tutoring, formData.proyecto_tutoring, formData.facultad_tutoring]);
-
+  }, [formData.asignatura_tutoring, formData.proyecto_tutoring, facultad]);
+  
   useEffect(() => {
-    if (formData.grupo_tutoring && formData.asignatura_tutoring && formData.proyecto_tutoring && formData.facultad_tutoring) {
-      const gruposData = data[formData.facultad_tutoring]?.[formData.proyecto_tutoring]?.[formData.asignatura_tutoring] || [];
+    if (formData.grupo_tutoring && formData.asignatura_tutoring && formData.proyecto_tutoring && facultad) {
+      const gruposData = data[facultad]?.[formData.proyecto_tutoring]?.[formData.asignatura_tutoring] || [];
       const grupoSeleccionado = gruposData.find((item) => item.grupo === formData.grupo_tutoring);
     
       if (grupoSeleccionado) {
         const profesoresDelGrupo = grupoSeleccionado.profesor || [];
     
-        // Obtener los nombres de los profesores
         const nombresProfesores = profesoresDelGrupo.map(prof => {
           const profesorDocumento = prof.documento;
           const profesorKey = Object.keys(profesoresJson).find(key => {
@@ -160,7 +92,6 @@ const NuevaTutoria = () => {
           setFormData(prev => ({ ...prev, tutor_tutoring: nombresProfesores[0] }));
         }
   
-        // Actualizar solo la lista de estudiantes aquí
         const profesorDocumento = profesoresDelGrupo[0]?.documento;
         const profesorKey = Object.keys(profesoresJson).find(key => {
           const [doc] = key.split(' - ');
@@ -186,40 +117,35 @@ const NuevaTutoria = () => {
       setProfesorHorario([]);
       setSelectedEstudiantes([]);
     }
-  }, [formData.grupo_tutoring, formData.asignatura_tutoring, formData.proyecto_tutoring, formData.facultad_tutoring]);
+  }, [formData.grupo_tutoring, formData.asignatura_tutoring, formData.proyecto_tutoring, facultad]);
   
-  // Nuevo useEffect para manejar los cambios del profesor seleccionado
   useEffect(() => {
     if (formData.tutor_tutoring && formData.asignatura_tutoring && formData.grupo_tutoring) {
-        // Buscar la key del profesor seleccionado
-        const profesorKey = Object.keys(profesoresJson).find(key => {
-            const nombre = key.split(' - ')[1];
-            return nombre === formData.tutor_tutoring;
-        });
+      const profesorKey = Object.keys(profesoresJson).find(key => {
+        const nombre = key.split(' - ')[1];
+        return nombre === formData.tutor_tutoring;
+      });
   
-        if (profesorKey) {
-            const horarioData = profesoresJson[profesorKey]?.[formData.asignatura_tutoring]?.[formData.grupo_tutoring]?.HORARIO || [];
-            setProfesorHorario(horarioData);
-            console.log(horarioData)
-        } else {
-            setProfesorHorario([]);
-        }
-    } else {
+      if (profesorKey) {
+        const horarioData = profesoresJson[profesorKey]?.[formData.asignatura_tutoring]?.[formData.grupo_tutoring]?.HORARIO || [];
+        setProfesorHorario(horarioData);
+        console.log(horarioData)
+      } else {
         setProfesorHorario([]);
+      }
+    } else {
+      setProfesorHorario([]);
     }
   }, [formData.tutor_tutoring, formData.asignatura_tutoring, formData.grupo_tutoring]);
-
   const handleEstudianteChange = (estudiante) => {
     setSelectedEstudiantes(prevSelected => {
       const isSelected = prevSelected.some(e => e.COD_ESTUDIANTE === estudiante.COD_ESTUDIANTE);
-      const newSelected = isSelected
+      return isSelected
         ? prevSelected.filter(e => e.COD_ESTUDIANTE !== estudiante.COD_ESTUDIANTE)
         : [...prevSelected, estudiante];
-  
-      console.log("Estado actualizado:", newSelected);
-      return newSelected;
     });
   };
+
   const getDayAbbreviation = (dateString) => {
     const date = new Date(dateString);
     const days = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
@@ -321,8 +247,20 @@ const validateScheduleConflict = () => {
   };
 
   const resetForm = () => {
-    setFormData(initialFormData);
-    setProyectos([]);
+    setFormData({
+      name_tutoring: '',
+      proyecto_tutoring: '',
+      asignatura_tutoring: '',
+      grupo_tutoring: '',
+      descripcion_tutoring: '',
+      tutor_tutoring: '',
+      opcion_horario: '',
+      link_tutoring: '',
+      salon_tutoring: '',
+      fecha_tutoring: '',
+      hora_inicio: '',
+      hora_fin: ''
+    });
     setAsignaturas([]);
     setGrupos([]);
     setProfesores([]);
@@ -392,7 +330,8 @@ const validateScheduleConflict = () => {
 
     const dataToSend = {
       ...formData,
-      estudiantes: selectedEstudiantes
+      estudiantes: selectedEstudiantes,
+      facultad_tutoring: facultad
     };
 
     console.log('Estudiantes seleccionados:', selectedEstudiantes);
@@ -411,14 +350,16 @@ const validateScheduleConflict = () => {
         toast.success('Formulario enviado con éxito.');
         resetForm();
         setTimeout(() => {
-          window.location.reload();
-        }, 2000);
+            window.location.reload();
+          }, 2000);
       } else {
         toast.error(data.error || 'Error al recibir datos');
       }
     } catch (error) {
       console.error('Error:', error);
       toast.error('Error de conexión con el servidor');
+      console.log('Datos a enviar:', dataToSend);
+
     }
     console.log('Formulario enviado:', dataToSend);
   };
@@ -440,38 +381,16 @@ const validateScheduleConflict = () => {
               required
             />
 
-            <label htmlFor="facultad_tutoring">Facultad:</label>
-            <select
-              id="facultad_tutoring"
-              name="facultad_tutoring"
-              value={formData.facultad_tutoring}
-              onChange={handleInputChange}
-              required
-            >
-              <option value="">Selecciona una facultad</option>
-              {facultades.map((facultad, index) => (
-                <option key={index} value={facultad}>
-                  {facultad}
-                </option>
-              ))}
-            </select>
+           
 
-            <label htmlFor="proyecto_tutoring">Proyecto Curricular:</label>
-            <select
+          <label htmlFor="proyecto_tutoring">Proyecto Curricular:</label>
+            <input
+              type="text"
               id="proyecto_tutoring"
               name="proyecto_tutoring"
               value={formData.proyecto_tutoring}
-              onChange={handleInputChange}
-              disabled={!formData.facultad_tutoring}
-              required
-            >
-              <option value="">Selecciona un proyecto</option>
-              {proyectos.map((proyecto, index) => (
-                <option key={index} value={proyecto}>
-                  {proyecto}
-                </option>
-              ))}
-            </select>
+              readOnly
+            />
 
             <label htmlFor="asignatura_tutoring">Asignatura:</label>
             <select
@@ -640,5 +559,4 @@ const validateScheduleConflict = () => {
     );
   };
   
-  export default NuevaTutoria;
-  
+  export default NuevaTutoriaCoordinador;

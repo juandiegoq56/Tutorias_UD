@@ -24,20 +24,20 @@ const MenuProfesor = ({ setView, view }) => {
         </button>
         <div className={`collapse navbar-collapse ${isOpen ? 'show' : ''}`} id="navbarNav">
           <ul className="navbar-nav">
+            <li className={`nav-item ${view === 'Tutorías Realizadas' ? 'active' : ''}`}>
+              <button
+                className="nav-link btn"
+                onClick={() => { setView('Tutorías Realizadas'); setIsOpen(false); }}
+              >
+                Tutorías Realizadas
+              </button>
+            </li>
             <li className={`nav-item ${view === 'nueva tutoria' ? 'active' : ''}`}>
               <button
                 className="nav-link btn"
                 onClick={() => { setView('nueva tutoria'); setIsOpen(false); }}
               >
                 Nueva Tutoría
-              </button>
-            </li>
-            <li className={`nav-item ${view === 'Tutorías Realizadas' ? 'active' : ''}`}>
-              <button
-                className="nav-link btn"
-                onClick={() => { setView('Tutorías Realizadas'); setIsOpen(false); }}
-              >
-                Tutorías Realizadas 
               </button>
             </li>
           </ul>

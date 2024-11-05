@@ -1,0 +1,12 @@
+{
+    "coordinadores":{
+        "123": {
+            "proyecto": "INGENIERIA ELECTRONICA"
+        },
+        "234": {
+            "proyecto" :"INGENIERIA ELECTRICA"
+         }
+        
+    }
+
+}

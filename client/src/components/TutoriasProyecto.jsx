@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ToastContainer, toast } from 'react-toastify';
+import { useParams } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
 import {
   Table,
@@ -22,6 +22,7 @@ import DetallesTutoria from './DetallesTutorias';
 import NuevaTutoria from './EditarTutoria';
 
 const HistorialTutorias = () => {
+  const { profesorId } = useParams();
   const [tutorias, setTutorias] = useState([]);
   const [facultades, setFacultades] = useState([]);
   const [selectedTutoria, setSelectedTutoria] = useState(null);
@@ -36,7 +37,7 @@ const HistorialTutorias = () => {
 
   const fetchTutorias = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/tutoring/tutorias'); // cambiar por la direccion de la Api.
+      const response = await fetch(`http://localhost:3001/api/tutoring/tutoriaCoordinador?coordinadorId=${profesorId}`); // cambiar por la direccion de la Api.
       const data = await response.json();
       const uniqueTutorias = groupStudentsByTutoriaId(data);
       setTutorias(uniqueTutorias);

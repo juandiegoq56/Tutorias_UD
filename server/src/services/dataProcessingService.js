@@ -49,17 +49,25 @@ const processFetchedData1 = async () => {
       const grupoExistente = acc[item.FACULTAD][item.CARRERA][item.ASIGNATURA].find(grupo => grupo.grupo === item.GRUPO);
 
       if (grupoExistente) {
-        grupoExistente.clases.push({
-          sede: item.SEDE,
-          edificio: item.EDIFICIO,
-          salon: item.SALON
-        });
+        // Verificar si el profesor ya está listado en el grupo por documento
+        const profesorExistente = grupoExistente.profesor.find(prof => prof.documento === item.DOC_DOCENTE);
+
+        if (!profesorExistente) {
+          // Añadir un nuevo profesor si no está ya en la lista
+          grupoExistente.profesor.push({
+            documento: item.DOC_DOCENTE,
+            nombre: item.DOCENTE
+          });
+        }
       } else {
+        // Si el grupo no existe, añadir un nuevo grupo con el profesor
         acc[item.FACULTAD][item.CARRERA][item.ASIGNATURA].push({
-          codigoAsig:item.CODIGO_SIGNATURA,
+          codigoAsig: item.CODIGO_SIGNATURA,
           grupo: item.GRUPO,
-          profesor: item.DOCENTE,
-          documento: item.DOC_DOCENTE,
+          profesor: [{
+            documento: item.DOC_DOCENTE,
+            nombre: item.DOCENTE
+          }],
           clases: [{
             sede: item.SEDE,
             edificio: item.EDIFICIO,
@@ -80,6 +88,7 @@ const processFetchedData1 = async () => {
     console.error('Error al procesar los datos:', error.message);
   }
 };
+
 
 
 // Función para ejecutar las tareas de procesamiento en el orden correcto

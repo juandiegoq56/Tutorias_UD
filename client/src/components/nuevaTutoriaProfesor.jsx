@@ -31,7 +31,7 @@ const NuevaTutoria = () => {
   const [selectedEstudiantes, setSelectedEstudiantes] = useState([]);
   const [linkError, setLinkError] = useState('');
   const [timeError, setTimeError] = useState('');
-
+  const [profesorHorario, setProfesorHorario] = useState([]);
   useEffect(() => {
     // Obtener asignaturas del profesor
     const profesorKey = Object.keys(profesoresJson).find(key => {
@@ -61,7 +61,7 @@ const NuevaTutoria = () => {
         const profesorData = profesoresJson[profesorKey];
         const grupos = Object.keys(profesorData[formData.asignatura_tutoring] || {});
         setGrupos(grupos);
-
+        
         // Limpiar estudiantes
         setEstudiantes([]);
         setSelectedEstudiantes([]);
@@ -94,6 +94,9 @@ const NuevaTutoria = () => {
       if (profesorKey) {
         const profesorData = profesoresJson[profesorKey];
         const grupoData = profesorData[formData.asignatura_tutoring][formData.grupo_tutoring];
+        const horarioData = profesoresJson[profesorKey]?.[formData.asignatura_tutoring]?.[formData.grupo_tutoring]?.HORARIO || [];
+        setProfesorHorario(horarioData);
+        console.log(horarioData)
         setEstudiantes(grupoData.ESTUDIANTES || []);
         setFormData(prev => ({
           ...prev,
@@ -114,14 +117,17 @@ const NuevaTutoria = () => {
       for (const proyecto in data[facultad]) {
         for (const asignatura in data[facultad][proyecto]) {
           const grupos = data[facultad][proyecto][asignatura];
-          if (grupos.some(grupo => grupo.documento === parseInt(documento))) {
-            return facultad;
+          for (const grupo of grupos) {
+            if (grupo.profesor && grupo.profesor.some(prof => prof.documento === parseInt(documento))) {
+              return facultad;
+            }
           }
         }
       }
     }
     return '';
   };
+  
 
   const handleEstudianteChange = (estudiante) => {
     setSelectedEstudiantes((prevSelected) => {
@@ -132,10 +138,76 @@ const NuevaTutoria = () => {
     });
   };
 
+  const getDayAbbreviation = (dateString) => {
+    const date = new Date(dateString);
+    const days = ['DOM', 'LUN', 'MAR', 'MIE', 'JUE', 'VIE', 'SAB'];
+    return days[date.getUTCDay()];
+};
+
+
+
+const validateScheduleConflict = () => {
+  const { hora_inicio, hora_fin, fecha_tutoring } = formData;
+
+  try {
+    const dayAbbreviation = getDayAbbreviation(fecha_tutoring);
+
+    // Función para formatear la hora a formato hh:mm
+    const formatHour = (hora) => {
+      return hora.padStart(2, '0') + ':00';
+    };
+
+    for (const { DIA, HORA_BLOQUE } of profesorHorario) {
+      if (DIA !== dayAbbreviation) continue;
+
+      const [bloqueInicioStr, bloqueFinStr] = HORA_BLOQUE.split('-');
+      // Solo formateamos las horas del bloque
+      const bloqueInicio = formatHour(bloqueInicioStr);
+      const bloqueFin = formatHour(bloqueFinStr);
+
+      // Ahora podemos comparar directamente las cadenas ya que todas están en formato hh:mm
+      if ((hora_inicio >= bloqueInicio && hora_inicio < bloqueFin) || 
+          (hora_fin > bloqueInicio && hora_fin <= bloqueFin) || 
+          (hora_inicio <= bloqueInicio && hora_fin >= bloqueFin)) {
+        console.log('Conflicto detectado');
+        return false;
+      }
+    }
+    console.log('No hay conflictos');
+    return true;
+  } catch (error) {
+    console.error(error.message);
+    return false;
+  }
+};
+
   const handleInputChange = (event) => {
     const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
-
+  
+    const minTime = '06:00';
+    const maxTime = '21:30';
+  
+    if (name === 'hora_inicio' || name === 'hora_fin') {
+      const { hora_inicio, hora_fin } = { ...formData, [name]: value };
+  
+      if (name === 'hora_inicio' && (value < minTime || value > maxTime)) {
+        setTimeError('La hora de inicio debe estar entre las 6:00 am y las 9:30 pm');
+        return;
+      }
+  
+      if (name === 'hora_fin' && (value < minTime || value > maxTime)) {
+        setTimeError('La hora de fin debe estar entre las 6:00 am y las 9:30 pm');
+        return;
+      }
+  
+      if (hora_inicio && hora_fin && hora_fin <= hora_inicio) {
+        setTimeError('La hora de fin debe ser mayor que la hora de inicio');
+      } else {
+        setTimeError('');
+      }
+    }
+  
     if (name === 'opcion_horario') {
       if (value === 'presencial') {
         setFormData((prev) => ({
@@ -164,29 +236,42 @@ const NuevaTutoria = () => {
         }
       }
     }
-
-    if (name === 'hora_inicio' || name === 'hora_fin') {
-      const { hora_inicio, hora_fin } = { ...formData, [name]: value };
-      if (hora_inicio && hora_fin && hora_fin <= hora_inicio) {
-        setTimeError('La hora de fin debe ser mayor que la hora de inicio');
-      } else {
-        setTimeError('');
-      }
-    }
   };
 
   const resetForm = () => {
     setFormData(initialFormData);
+    setAsignaturas([]);
     setGrupos([]);
     setEstudiantes([]);
     setSelectedEstudiantes([]);
     setLinkError('');
     setTimeError('');
   };
+  const validateTimeRange = () => {
+    const { hora_inicio, hora_fin } = formData;
+    const start = new Date(`1970-01-01T${hora_inicio}:00`);
+    const end = new Date(`1970-01-01T${hora_fin}:00`);
+    const minTime = new Date(`1970-01-01T06:00:00`);
+    const maxTime = new Date(`1970-01-01T21:30:00`);
 
+    if (start < minTime || end > maxTime || start >= end) {
+      setTimeError('Las horas deben estar entre 06:00 AM y 09:30 PM y la hora de fin debe ser despues de la hora de Inicio');
+      return false;
+    }
+
+    setTimeError('');
+    return true;
+  };
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    if (!validateTimeRange()) {
+      toast.error("Por favor, corrige los errores antes de enviar el formulario.");
+      return;
+    }
+    if (!validateScheduleConflict()) {
+      toast.error("La tutoría no puede ser agendada durante el horario de clase del profesor. Por favor, elige otro horario.");
+      return;
+    }
     for (const key in formData) {
       if (formData[key] === '' && key !== 'link_tutoring' && key !== 'salon_tutoring') {
         toast.error('Por favor, completa todos los campos antes de enviar el formulario.');
@@ -226,8 +311,10 @@ const NuevaTutoria = () => {
       estudiantes: selectedEstudiantes
     };
 
+    console.log('Estudiantes seleccionados:', selectedEstudiantes);
+
     try {
-      const response = await fetch('http://192.168.0.46/api/tutoring/', {
+      const response = await fetch('http://localhost:3001/api/tutoring/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -237,7 +324,11 @@ const NuevaTutoria = () => {
 
       const data = await response.json();
       if (response.ok) {
-        toast.success('Datos recibidos con éxito.');
+        toast.success('Formulario enviado con éxito.');
+        resetForm();
+        setTimeout(() => {
+          window.location.reload();
+        }, 2000);
       } else {
         toast.error(data.error || 'Error al recibir datos');
       }
@@ -245,9 +336,9 @@ const NuevaTutoria = () => {
       console.error('Error:', error);
       toast.error('Error de conexión con el servidor');
     }
-    toast.success('Formulario enviado con éxito.');
-    resetForm();
+    console.log('Formulario enviado:', dataToSend);
   };
+
 
   return (
     <div className='container'>
@@ -325,6 +416,7 @@ const NuevaTutoria = () => {
             />
 
             <div className='size-label'>
+            <label htmlFor="estudiante_tutoring">Estudiante/s:</label>
               {estudiantes.length === 0 ? (
                 <p>No hay estudiantes disponibles</p>
               ) : (

@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
 import '../css/Seguimiento.css'; // Asegúrate de que este archivo CSS existe
 
 const SeguimientoTutorias = () => {
+  const { profesorId } = useParams();
   const [tutorias, setTutorias] = useState([]);
   const [facultades, setFacultades] = useState([]);
   const [filters, setFilters] = useState({
@@ -16,7 +18,7 @@ const SeguimientoTutorias = () => {
   const [error, setError] = useState('');
 
   useEffect(() => {
-    fetch('http://localhost:3001/api/tutoring/tutorias')
+    fetch(`http://localhost:3001/api/tutoring/tutoriaCoordinador?coordinadorId=${profesorId}`)
       .then(response => response.json())
       .then(data => {
         const uniqueTutorias = groupStudentsByTutoriaId(data);
@@ -24,7 +26,7 @@ const SeguimientoTutorias = () => {
         const facultadesUnicas = new Set(uniqueTutorias.map(tutoria => tutoria.facultad));
         setFacultades(Array.from(facultadesUnicas));
       });
-  }, []);
+  }, [profesorId]);
 
   const groupStudentsByTutoriaId = (array) => {
     const grouped = array.reduce((acc, curr) => {

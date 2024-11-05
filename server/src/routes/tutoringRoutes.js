@@ -6,6 +6,7 @@ const loginid = require ('../controllers/loginid');
 router.post('/', tutoringController.createTutoring);
 router.get ('/tutorias',getTutoriaController.getTutoring);
 router.get ('/tutoriasProfesor',getTutoriaController.getTutoringProfesor);
+router.get ('/tutoriaCoordinador',getTutoriaController.getTutoringCoordinador);
 router.put('/tutorias/:id', tutoringController.updateTutoring);
 router.post('/login',loginid.login);
 router.delete('/tutorias/:id',tutoringController.deleteTutoria);
