@@ -35,7 +35,6 @@ exports.createTutoring = (req, res) => {
   
   console.log(`Buscando tutor: ${tutorNombre}, asignatura: ${asignaturaNombre}, grupo: ${grupoNombre}`);
 
-  
   // Buscar el profesor y la asignatura en allOrganizedData
   for (const profesorKey in allOrganizedData) {
     if (profesorKey.toUpperCase().includes(tutorNombre)) {
@@ -60,20 +59,18 @@ exports.createTutoring = (req, res) => {
     }
   }
 
-  // Si se encuentra el profesor y la asignatura, proceder con la inserción en la base de datos
   if (codigoProfesor && codigoAsignatura) {
     connection.beginTransaction((err) => {
       if (err) throw err;
 
-      const checkMateriaQuery = `SELECT 1 FROM Materias WHERE codigo = ?`;
+      const checkMateriaQuery = `SELECT 1 FROM materias WHERE codigo = ?`;
       connection.query(checkMateriaQuery, [codigoAsignatura], (err, results) => {
         if (err) return connection.rollback(() => { throw err; });
 
-        // Función para insertar la materia si no existe
         const insertMateria = () => {
           return new Promise((resolve, reject) => {
             if (results.length === 0) {
-              const materiaQuery = `INSERT INTO Materias (nombre, codigo, facultad, proyecto) VALUES (?, ?, ?, ?)`;
+              const materiaQuery = `INSERT INTO materias (nombre, codigo, facultad, proyecto) VALUES (?, ?, ?, ?)`;
               connection.query(materiaQuery, [asignaturaNombre, codigoAsignatura, formData.facultad_tutoring, formData.proyecto_tutoring], (err, result) => {
                 if (err) return reject(err);
                 resolve();
@@ -84,10 +81,9 @@ exports.createTutoring = (req, res) => {
           });
         };
 
-        // Función para insertar o actualizar al profesor
         const insertProfesor = () => {
           return new Promise((resolve, reject) => {
-            const profesorQuery = `INSERT INTO Profesores (codigo, nombre, apellido) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), apellido=VALUES(apellido)`;
+            const profesorQuery = `INSERT INTO profesores (codigo, nombre, apellido) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE nombre=VALUES(nombre), apellido=VALUES(apellido)`;
             connection.query(profesorQuery, [codigoProfesor, nombres, apellidos], (err, result) => {
               if (err) return reject(err);
               resolve();
@@ -95,50 +91,45 @@ exports.createTutoring = (req, res) => {
           });
         };
 
-        // Función para insertar la tutoría
         const insertTutoria = () => {
           return new Promise((resolve, reject) => {
             const linkTutoring = formData.link_tutoring || "N/A";
             const salonTutoring = formData.salon_tutoring || "N/A";
-            const tutoriaQuery = `INSERT INTO Tutorias (titulo, fecha, horaInicio, horaFin, profesorCod, materiaCod,sede_salon,link_reunion,grupo,descripcion) VALUES (?, ?, ?, ?, ?, ?,?,?,?,?)`;
-            connection.query(tutoriaQuery, [formData.name_tutoring, formData.fecha_tutoring, formData.hora_inicio, formData.hora_fin, codigoProfesor, codigoAsignatura,salonTutoring,linkTutoring,grupoNombre,formData.descripcion_tutoring], (err, result) => {
+            const tutoriaQuery = `INSERT INTO tutorias (titulo, fecha, horainicio, horafin, profesorcod, materiacod, sede_salon, link_reunion, grupo, descripcion) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`;
+            connection.query(tutoriaQuery, [formData.name_tutoring, formData.fecha_tutoring, formData.hora_inicio, formData.hora_fin, codigoProfesor, codigoAsignatura, salonTutoring, linkTutoring, grupoNombre, formData.descripcion_tutoring], (err, result) => {
               if (err) return reject(err);
               resolve(result.insertId);
             });
           });
         };
 
-        // Función para insertar los estudiantes y relacionarlos con la tutoría
-        const insertEstudiantes = (tutoriaId) => {
+        const insertEstudiantes = (tutoriaid) => {
           const promises = estudiantes.map(estudiante => {
             return new Promise((resolve, reject) => {
               const estudianteNombres = estudiante.ESTUDIANTE.split(' ').slice(2).join(' ');
               const estudianteApellidos = estudiante.ESTUDIANTE.split(' ').slice(0, 2).join(' ');
         
-              // Verificar si el estudiante ya existe en la tabla Estudiantes
-              const checkEstudianteQuery = `SELECT 1 FROM Estudiantes WHERE codigo = ?`;
+              const checkEstudianteQuery = `SELECT 1 FROM estudiantes WHERE codigo = ?`;
               connection.query(checkEstudianteQuery, [estudiante.COD_ESTUDIANTE], (err, results) => {
                 if (err) return reject(err);
         
-                // Si el estudiante no existe, lo insertamos
                 const insertOrUpdateEstudiante = () => {
                   return new Promise((resolveInsert, rejectInsert) => {
                     if (results.length === 0) {
-                      const estudianteQuery = `INSERT INTO Estudiantes (codigo, nombre, apellido) VALUES (?, ?, ?)`;
+                      const estudianteQuery = `INSERT INTO estudiantes (codigo, nombre, apellido) VALUES (?, ?, ?)`;
                       connection.query(estudianteQuery, [estudiante.COD_ESTUDIANTE, estudianteNombres, estudianteApellidos], (err, result) => {
                         if (err) return rejectInsert(err);
                         resolveInsert();
                       });
                     } else {
-                      resolveInsert(); // El estudiante ya existe, no es necesario insertar
+                      resolveInsert();
                     }
                   });
                 };
         
-                // Insertar al estudiante si no existe, luego crear la relación en TutoriasEstudiantes
                 insertOrUpdateEstudiante().then(() => {
-                  const tutoriaEstudianteQuery = `INSERT INTO TutoriasEstudiantes (tutoriaId, estudianteCod) VALUES (?, ?)`;
-                  connection.query(tutoriaEstudianteQuery, [tutoriaId, estudiante.COD_ESTUDIANTE], (err, result) => {
+                  const tutoriaEstudianteQuery = `INSERT INTO tutoriasestudiantes (tutoriaid, estudiantecod) VALUES (?, ?)`;
+                  connection.query(tutoriaEstudianteQuery, [tutoriaid, estudiante.COD_ESTUDIANTE], (err, result) => {
                     if (err) return reject(err);
                     resolve();
                   });
@@ -149,15 +140,13 @@ exports.createTutoring = (req, res) => {
         
           return Promise.all(promises);
         };
-        
 
-        // Ejecutar las inserciones de manera secuencial
         const executeInserts = async () => {
           try {
             await insertMateria();
             await insertProfesor();
-            const tutoriaId = await insertTutoria();
-            await insertEstudiantes(tutoriaId);
+            const tutoriaid = await insertTutoria();
+            await insertEstudiantes(tutoriaid);
             connection.commit((err) => {
               if (err) return connection.rollback(() => { throw err; });
               res.json({ message: 'Datos insertados correctamente' });
@@ -174,9 +163,8 @@ exports.createTutoring = (req, res) => {
     res.status(404).json({ error: "No se encontraron los datos para la tutoría solicitada." });
   }
 };
-
 exports.updateTutoring = (req, res) => {
-  const tutoriaId = req.params.id; // ID de la tutoría a actualizar
+  const tutoriaid = req.params.id;
   const formData = req.body;
   let codigoProfesor = null;
   let codigoAsignatura = null;
@@ -210,7 +198,6 @@ exports.updateTutoring = (req, res) => {
 
   console.log(`Buscando tutor: ${tutorNombre}, asignatura: ${asignaturaNombre}, grupo: ${grupoNombre}`);
 
-  // Buscar el profesor y la asignatura en allOrganizedData
   for (const profesorKey in allOrganizedData) {
     if (profesorKey.toUpperCase().includes(tutorNombre)) {
       const profesorData = allOrganizedData[profesorKey];
@@ -267,7 +254,7 @@ exports.updateTutoring = (req, res) => {
           const salonTutoring = formData.salon_tutoring || "N/A";
           const tutoriaQuery = `
             UPDATE tutorias
-            SET titulo = ?, fecha = ?, horaInicio = ?, horaFin = ?, profesorCod = ?, materiaCod = ?, sede_salon = ?, link_reunion = ?, grupo = ?, descripcion = ?
+            SET titulo = ?, fecha = ?, horainicio = ?, horafin = ?, profesorcod = ?, materiacod = ?, sede_salon = ?, link_reunion = ?, grupo = ?, descripcion = ?
             WHERE id = ?
           `;
           connection.query(tutoriaQuery, [
@@ -281,7 +268,7 @@ exports.updateTutoring = (req, res) => {
             linkTutoring,
             grupoNombre,
             formData.descripcion_tutoring,
-            tutoriaId
+            tutoriaid
           ], (err, result) => {
             if (err) return reject(err);
             resolve();
@@ -291,8 +278,8 @@ exports.updateTutoring = (req, res) => {
 
       const updateEstudiantes = () => {
         return new Promise((resolve, reject) => {
-          const deleteSql = 'DELETE FROM tutoriasestudiantes WHERE tutoriaId = ?';
-          connection.query(deleteSql, [tutoriaId], (err) => {
+          const deleteSql = 'DELETE FROM tutoriasestudiantes WHERE tutoriaid = ?';
+          connection.query(deleteSql, [tutoriaid], (err) => {
             if (err) return reject(err);
 
             const promises = estudiantes.map(estudiante => {
@@ -300,12 +287,10 @@ exports.updateTutoring = (req, res) => {
                 const estudianteNombres = estudiante.ESTUDIANTE.split(' ').slice(2).join(' ');
                 const estudianteApellidos = estudiante.ESTUDIANTE.split(' ').slice(0, 2).join(' ');
 
-                // Verificar si el estudiante ya existe en la tabla estudiantes
                 const checkEstudianteQuery = `SELECT 1 FROM estudiantes WHERE codigo = ?`;
                 connection.query(checkEstudianteQuery, [estudiante.COD_ESTUDIANTE], (err, results) => {
                   if (err) return rejectEstudiante(err);
 
-                  // Si el estudiante no existe, lo insertamos
                   const insertOrUpdateEstudiante = () => {
                     return new Promise((resolveInsert, rejectInsert) => {
                       if (results.length === 0) {
@@ -315,15 +300,14 @@ exports.updateTutoring = (req, res) => {
                           resolveInsert();
                         });
                       } else {
-                        resolveInsert(); // El estudiante ya existe, no es necesario insertar
+                        resolveInsert();
                       }
                     });
                   };
 
-                  // Insertar al estudiante si no existe, luego crear la relación en tutoriasestudiantes
                   insertOrUpdateEstudiante().then(() => {
-                    const tutoriaEstudianteQuery = `INSERT INTO tutoriasestudiantes (tutoriaId, estudianteCod) VALUES (?, ?)`;
-                    connection.query(tutoriaEstudianteQuery, [tutoriaId, estudiante.COD_ESTUDIANTE], (err, result) => {
+                    const tutoriaEstudianteQuery = `INSERT INTO tutoriasestudiantes (tutoriaid, estudiantecod) VALUES (?, ?)`;
+                    connection.query(tutoriaEstudianteQuery, [tutoriaid, estudiante.COD_ESTUDIANTE], (err, result) => {
                       if (err) return rejectEstudiante(err);
                       resolveEstudiante();
                     });
@@ -359,9 +343,8 @@ exports.updateTutoring = (req, res) => {
   }
 };
 
-
 exports.deleteTutoria = (req, res) => {
-  const tutoriaId = req.params.id; 
+  const tutoriaid = req.params.id;
 
   connection.beginTransaction((err) => {
     if (err) {
@@ -369,8 +352,8 @@ exports.deleteTutoria = (req, res) => {
       return res.status(500).json({ error: 'Error interno del servidor.' });
     }
 
-    const deleteFromTutoriasEstudiantes = 'DELETE FROM tutoriasestudiantes WHERE tutoriaId = ?';
-    connection.query(deleteFromTutoriasEstudiantes, [tutoriaId], (err, result) => {
+    const deleteFromTutoriasEstudiantes = 'DELETE FROM tutoriasestudiantes WHERE tutoriaid = ?';
+    connection.query(deleteFromTutoriasEstudiantes, [tutoriaid], (err, result) => {
       if (err) {
         return connection.rollback(() => {
           console.error('Error al eliminar de tutoriasestudiantes:', err);
@@ -379,10 +362,10 @@ exports.deleteTutoria = (req, res) => {
       }
 
       const deleteFromTutorias = 'DELETE FROM tutorias WHERE id = ?';
-      connection.query(deleteFromTutorias, [tutoriaId], (err, result) => {
+      connection.query(deleteFromTutorias, [tutoriaid], (err, result) => {
         if (err) {
           return connection.rollback(() => {
-            console.error('Error al eliminar de TUTORIAS:', err);
+            console.error('Error al eliminar de tutorias:', err);
             res.status(500).json({ error: 'Error interno del servidor.' });
           });
         }
@@ -407,4 +390,3 @@ exports.deleteTutoria = (req, res) => {
     });
   });
 };
-

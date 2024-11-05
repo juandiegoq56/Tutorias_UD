@@ -1,13 +1,14 @@
 const connection = require('../config/db'); 
 const coordinadores = require('../../../client/src/Data/coordinadorAdmin.json');
+
 exports.getTutoring = (req, res) => {
     const sql = `
     SELECT ti.tutoriaId,ti.estudianteCod, T.titulo,T.link_reunion,T.sede_salon,T.descripcion,
     T.fecha,T.horaInicio,T.horaFin,CONCAT(E.nombre, ' ', E.apellido) AS estudiante,m.nombre AS asignatura,
     m.facultad,m.proyecto,T.grupo,CONCAT(p.nombre, ' ', p.apellido) AS profesor
     FROM tutoriasestudiantes ti
-    JOIN TUTORIAS T ON ti.tutoriaId = T.id
-    JOIN ESTUDIANTES E ON ti.estudianteCod = E.codigo
+    JOIN tutorias T ON ti.tutoriaId = T.id
+    JOIN estudiantes E ON ti.estudianteCod = E.codigo
     JOIN materias m ON T.materiaCod = m.codigo
     JOIN profesores p ON T.profesorCod = p.codigo
   `;
@@ -32,8 +33,8 @@ exports.getTutoringProfesor = (req, res) => {
   m.nombre AS asignatura, m.facultad, m.proyecto, T.grupo, 
   CONCAT(p.nombre, ' ', p.apellido) AS profesor
   FROM tutoriasestudiantes ti
-  JOIN TUTORIAS T ON ti.tutoriaId = T.id
-  JOIN ESTUDIANTES E ON ti.estudianteCod = E.codigo
+  JOIN tutorias T ON ti.tutoriaId = T.id
+  JOIN estudiantes E ON ti.estudianteCod = E.codigo
   JOIN materias m ON T.materiaCod = m.codigo
   JOIN profesores p ON T.profesorCod = p.codigo
   WHERE T.profesorCod = ?
@@ -70,8 +71,8 @@ exports.getTutoringCoordinador = (req, res) => {
     m.nombre AS asignatura, m.facultad, m.proyecto, T.grupo, 
     CONCAT(p.nombre, ' ', p.apellido) AS profesor
     FROM tutoriasestudiantes ti
-    JOIN TUTORIAS T ON ti.tutoriaId = T.id
-    JOIN ESTUDIANTES E ON ti.estudianteCod = E.codigo
+    JOIN tutorias T ON ti.tutoriaId = T.id
+    JOIN estudiantes E ON ti.estudianteCod = E.codigo
     JOIN materias m ON T.materiaCod = m.codigo
     JOIN profesores p ON T.profesorCod = p.codigo
     WHERE m.proyecto = ?

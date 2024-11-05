@@ -15,6 +15,105 @@ form {
     /*width: 95%;*/
     
   }
+  /* NuevaTutoria.css */
+.tutoria-container {
+  padding: 20px;
+}
+
+.tutoria-container h2 {
+  margin-bottom: 20px;
+  font-size: 24px;
+}
+
+.form-container {
+  background: white;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: 20px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.label-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.label-container label {
+  font-weight: normal;
+  margin-right: 5px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 6px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 14px;
+}
+
+select.form-control {
+  height: 34px;
+  background-color: white;
+}
+
+.tooltip-container {
+  position: relative;
+  display: inline-block;
+}
+
+.tooltip-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  color: #666;
+  font-size: 12px;
+  cursor: help;
+  margin-left: 5px;
+}
+
+.tooltip-content {
+  display: none;
+  position: absolute;
+  right: -10px;
+  top: 100%;
+  background: #333;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  width: 200px;
+  margin-top: 5px;
+  z-index: 1000;
+}
+
+.tooltip-container:hover .tooltip-content {
+  display: block;
+}
+
+.no-students {
+  color: #666;
+  font-style: italic;
+}
+
+/* Añade una flecha al tooltip */
+.tooltip-content::before {
+  content: '';
+  position: absolute;
+  top: -5px;
+  right: 13px;
+  border-width: 0 5px 5px;
+  border-style: solid;
+  border-color: transparent transparent #333;
+}
+
   .create-form{
     display: flex;
     flex-direction: column;

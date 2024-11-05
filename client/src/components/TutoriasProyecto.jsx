@@ -30,14 +30,13 @@ const HistorialTutorias = () => {
   const [filters, setFilters] = useState({
     facultad: '',
     proyecto: '',
-    mes: '',
     asignatura: '',
     profesor: ''
   });
 
   const fetchTutorias = async () => {
     try {
-      const response = await fetch(`http://localhost:3001/api/tutoring/tutoriaCoordinador?coordinadorId=${profesorId}`); // cambiar por la direccion de la Api.
+      const response = await fetch(`http://localhost:3001/api/tutoring/tutoriaCoordinador?coordinadorId=${profesorId}`);
       const data = await response.json();
       const uniqueTutorias = groupStudentsByTutoriaId(data);
       setTutorias(uniqueTutorias);
@@ -142,15 +141,11 @@ const HistorialTutorias = () => {
   };
 
   const tutoriasFiltradas = tutorias.filter(tutoria => {
-    const tutoriaFecha = new Date(tutoria.fecha);
-    const tutoriaMes = tutoriaFecha.getMonth() + 1;
-
     return (
       (filters.facultad === '' || tutoria.facultad === filters.facultad) &&
       (filters.proyecto === '' || tutoria.proyecto === filters.proyecto) &&
       (filters.asignatura === '' || tutoria.asignatura === filters.asignatura) &&
-      (filters.profesor === '' || tutoria.profesor === filters.profesor) &&
-      (filters.mes === '' || tutoriaMes === parseInt(filters.mes))
+      (filters.profesor === '' || tutoria.profesor === filters.profesor)
     );
   });
 
@@ -177,7 +172,7 @@ const HistorialTutorias = () => {
           <h1>Tutorías Realizadas ({tutoriasFiltradas.length})</h1>
           <p>Tutorias realizadas a la fecha</p>
           <div className="filtros" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {['facultad', 'proyecto', 'asignatura', 'profesor', 'mes'].map((filter, index) => (
+            {['facultad', 'proyecto', 'asignatura', 'profesor'].map((filter, index) => (
               <FormControl variant="outlined" margin="normal" key={index} style={{ minWidth: 120 }}>
                 <InputLabel id={`${filter}-label`}>{filter.charAt(0).toUpperCase() + filter.slice(1)}</InputLabel>
                 <Select
@@ -192,11 +187,10 @@ const HistorialTutorias = () => {
                   {(filter === 'facultad' ? facultades :
                     filter === 'proyecto' ? proyectos :
                     filter === 'asignatura' ? asignaturas :
-                    filter === 'profesor' ? profesores :
-                    filter === 'mes' ? Array.from({ length: 12 }, (_, i) => i + 1) : []
+                    filter === 'profesor' ? profesores : []
                   ).map((item, idx) => (
                     <MenuItem key={idx} value={item}>
-                      {filter === 'mes' ? new Date(0, item - 1).toLocaleString('default', { month: 'long' }) : item}
+                      {item}
                     </MenuItem>
                   ))}
                 </Select>

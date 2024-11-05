@@ -4,7 +4,8 @@ import profesoresJson from '../Data/allOrganizedData.json';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import '../css/NuevaTutoria.css';
-
+import FormField from './FormField';
+import { tooltips } from './tooltips';
 const NuevaTutoria = () => {
   const initialFormData = {
     name_tutoring: '',
@@ -21,7 +22,8 @@ const NuevaTutoria = () => {
     hora_inicio: '',
     hora_fin: ''
   };
-
+ 
+  
   const [formData, setFormData] = useState(initialFormData);
   const [facultades, setFacultades] = useState([]);
   const [proyectos, setProyectos] = useState([]);
@@ -430,33 +432,48 @@ const validateScheduleConflict = () => {
         <div className='create'>
           <h1>Información de Tutorías</h1>
           <div className='create-form'>
-            <label htmlFor="name_tutoring">Nombre:</label>
-            <input
-              type="text"
-              id="name_tutoring"
-              name="name_tutoring"
-              value={formData.name_tutoring}
-              onChange={handleInputChange}
-              required
-            />
-
-            <label htmlFor="facultad_tutoring">Facultad:</label>
-            <select
-              id="facultad_tutoring"
-              name="facultad_tutoring"
-              value={formData.facultad_tutoring}
-              onChange={handleInputChange}
-              required
+          
+          <FormField 
+              label="Nombre"
+              tooltip={tooltips.name_tutoring}
             >
-              <option value="">Selecciona una facultad</option>
-              {facultades.map((facultad, index) => (
-                <option key={index} value={facultad}>
-                  {facultad}
-                </option>
-              ))}
-            </select>
+              <input
+                type="text"
+                id="name_tutoring"
+                name="name_tutoring"
+                value={formData.name_tutoring}
+                onChange={handleInputChange}
+                required
+              />
+            </FormField>
+            
+            <FormField 
+          label="Facultad"
+          tooltip={tooltips.facultad_tutoring}
+          htmlFor="facultad_tutoring"
+        >
+          <select
+            id="facultad_tutoring"
+            name="facultad_tutoring"
+            value={formData.facultad_tutoring}
+            onChange={handleInputChange}
+            className="form-control"
+            required
+          >
+            <option value="">Selecciona una facultad</option>
+            {facultades.map((facultad, index) => (
+              <option key={index} value={facultad}>
+                {facultad}
+              </option>
+            ))}
+          </select>
+        </FormField>
 
-            <label htmlFor="proyecto_tutoring">Proyecto Curricular:</label>
+        <FormField 
+            label="Proyecto Curricular"
+            tooltip={tooltips.proyecto_tutoring}
+            htmlFor="proyecto_tutoring"
+          >
             <select
               id="proyecto_tutoring"
               name="proyecto_tutoring"
@@ -472,8 +489,13 @@ const validateScheduleConflict = () => {
                 </option>
               ))}
             </select>
+          </FormField>
 
-            <label htmlFor="asignatura_tutoring">Asignatura:</label>
+          <FormField 
+            label="Asignatura"
+            tooltip={tooltips.asignatura_tutoring}
+            htmlFor="asignatura_tutoring"
+          >
             <select
               id="asignatura_tutoring"
               name="asignatura_tutoring"
@@ -489,9 +511,15 @@ const validateScheduleConflict = () => {
                 </option>
               ))}
             </select>
+          </FormField>
 
-            <label htmlFor="grupo_tutoring">Grupo:</label>
+          <FormField 
+            label="Grupo"
+            tooltip={tooltips.grupo_tutoring}
+            htmlFor="grupo_tutoring"
+          >
             <select
+              id="grupo_tutoring"
               name="grupo_tutoring"
               value={formData.grupo_tutoring}
               onChange={handleInputChange}
@@ -503,8 +531,13 @@ const validateScheduleConflict = () => {
                 </option>
               ))}
             </select>
+          </FormField>
 
-            <label htmlFor="tutor_tutoring">Profesor:</label>
+          <FormField 
+            label="Profesor"
+            tooltip={tooltips.tutor_tutoring}
+            htmlFor="tutor_tutoring"
+          >
             <select
               id="tutor_tutoring"
               name="tutor_tutoring"
@@ -519,9 +552,14 @@ const validateScheduleConflict = () => {
                 </option>
               ))}
             </select>
+          </FormField>
 
+          <FormField 
+            label="Estudiante/s"
+            tooltip={tooltips.estudiante_tutoring}
+            htmlFor="estudiante_tutoring"
+          >
             <div className='size-label'>
-              <label htmlFor="estudiante_tutoring">Estudiante/s:</label>
               {estudiantes.length === 0 ? (
                 <p>No hay estudiantes disponibles</p>
               ) : (
@@ -539,8 +577,13 @@ const validateScheduleConflict = () => {
                 ))
               )}
             </div>
+          </FormField>
 
-            <label htmlFor="descripcion_tutoring">Descripción Tema:</label>
+          <FormField 
+            label="Descripción Tema"
+            tooltip={tooltips.descripcion_tutoring}
+            htmlFor="descripcion_tutoring"
+          >
             <textarea
               id="descripcion_tutoring"
               name="descripcion_tutoring"
@@ -549,7 +592,12 @@ const validateScheduleConflict = () => {
               onChange={handleInputChange}
               required
             />
+          </FormField>
 
+          <FormField 
+            label="Modalidad"
+            tooltip={tooltips.opcion_horario}
+          >
             <fieldset>
               <legend>Modalidad:</legend>
               <div>
@@ -577,8 +625,14 @@ const validateScheduleConflict = () => {
                 <label htmlFor="virtual">Virtual</label>
               </div>
             </fieldset>
+          </FormField>
 
-            <label htmlFor="link_tutoring">Link Tutoría:</label>
+          
+          <FormField 
+            label="Link Tutoría"
+            tooltip={tooltips.link_tutoring}
+            htmlFor="link_tutoring"
+          >
             <input
               type="text"
               id="link_tutoring"
@@ -589,48 +643,71 @@ const validateScheduleConflict = () => {
               required={formData.opcion_horario === 'virtual'}
             />
             {linkError && <p style={{ color: 'red' }}>{linkError}</p>}
+          </FormField>
 
-            <label htmlFor="salon_tutoring">Sede Salón:</label>
+          <FormField 
+            label="Sede Salón"
+            tooltip={tooltips.salon_tutoring}
+            htmlFor="salon_tutoring"
+          >
             <input
               type="text"
               id="salon_tutoring"
               name="salon_tutoring"
               value={formData.salon_tutoring}
               onChange={handleInputChange}
-                disabled={formData.opcion_horario !== 'presencial'}
-                required={formData.opcion_horario === 'presencial'}
-              />
+              disabled={formData.opcion_horario !== 'presencial'}
+              required={formData.opcion_horario === 'presencial'}
+            />
+          </FormField>
   
-              <label htmlFor="fecha_tutoring">Fecha:</label>
-              <input
-                type="date"
-                id="fecha_tutoring"
-                name="fecha_tutoring"
-                value={formData.fecha_tutoring}
-                onChange={handleInputChange}
-                required
-              />
-  
-              <label htmlFor="hora_inicio">Hora de Inicio:</label>
-              <input
-                type="time"
-                id="hora_inicio"
-                name="hora_inicio"
-                value={formData.hora_inicio}
-                onChange={handleInputChange}
-                required
-              />
-  
-              <label htmlFor="hora_fin">Hora de Fin:</label>
-              <input
-                type="time"
-                id="hora_fin"
-                name="hora_fin"
-                value={formData.hora_fin}
-                onChange={handleInputChange}
-                required
-              />
-              {timeError && <p style={{ color: 'red' }}>{timeError}</p>}
+          <FormField 
+            label="Fecha"
+            tooltip={tooltips.fecha_tutoring}
+            htmlFor="fecha_tutoring"
+          >
+            <input
+              type="date"
+              id="fecha_tutoring"
+              name="fecha_tutoring"
+              value={formData.fecha_tutoring}
+              onChange={handleInputChange}
+              required
+            />
+          </FormField>
+
+          <FormField 
+            label="Hora de Inicio"
+            tooltip={tooltips.hora_inicio}
+            htmlFor="hora_inicio"
+          >
+            <input
+              type="time"
+              id="hora_inicio"
+              name="hora_inicio"
+              value={formData.hora_inicio}
+              onChange={handleInputChange}
+              required
+            />
+          </FormField>
+
+         
+          <FormField 
+            label="Hora de Fin"
+            tooltip={tooltips.hora_fin}
+            htmlFor="hora_fin"
+          >
+            <input
+              type="time"
+              id="hora_fin"
+              name="hora_fin"
+              value={formData.hora_fin}
+              onChange={handleInputChange}
+              required
+            />
+            {timeError && <p style={{ color: 'red' }}>{timeError}</p>}
+          </FormField>
+
   
               <button type="submit">Crear Tutoría</button>
             </div>

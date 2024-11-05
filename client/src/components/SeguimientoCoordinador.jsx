@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import * as XLSX from 'xlsx';
 import { Box, Button, FormControl, InputLabel, MenuItem, Select, Typography, Grid, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Paper } from '@mui/material';
-import '../css/Seguimiento.css'; // Asegúrate de que este archivo CSS existe
+import '../css/Seguimiento.css';
 
 const SeguimientoTutorias = () => {
   const { profesorId } = useParams();
@@ -12,8 +12,7 @@ const SeguimientoTutorias = () => {
     facultad: '',
     proyecto: '',
     asignatura: '',
-    profesor: '',
-    mes: ''
+    profesor: ''
   });
   const [error, setError] = useState('');
 
@@ -83,15 +82,11 @@ const SeguimientoTutorias = () => {
   };
 
   const tutoriasFiltradas = tutorias.filter(tutoria => {
-    const tutoriaFecha = new Date(tutoria.fecha);
-    const tutoriaMes = tutoriaFecha.getMonth() + 1;
-
     return (
       (filters.facultad === '' || tutoria.facultad === filters.facultad) &&
       (filters.proyecto === '' || tutoria.proyecto === filters.proyecto) &&
       (filters.asignatura === '' || tutoria.asignatura === filters.asignatura) &&
-      (filters.profesor === '' || tutoria.profesor === filters.profesor) &&
-      (filters.mes === '' || tutoriaMes === parseInt(filters.mes))
+      (filters.profesor === '' || tutoria.profesor === filters.profesor)
     );
   });
 
@@ -145,8 +140,8 @@ const SeguimientoTutorias = () => {
       </Typography>
       <form onSubmit={(e) => { e.preventDefault(); handleDownloadExcel(); }}>
         <Grid container spacing={2}>
-          {['facultad', 'proyecto', 'asignatura', 'profesor', 'mes'].map((filter, index) => (
-            <Grid item xs={12} sm={6} md={4} lg={2} key={index}>
+          {['facultad', 'proyecto', 'asignatura', 'profesor'].map((filter, index) => (
+            <Grid item xs={12} sm={6} md={4} lg={3} key={index}>
               <FormControl fullWidth>
                 <InputLabel id={`${filter}-label`}>{filter.charAt(0).toUpperCase() + filter.slice(1)}</InputLabel>
                 <Select
@@ -160,11 +155,10 @@ const SeguimientoTutorias = () => {
                   {(filter === 'facultad' ? facultades :
                     filter === 'proyecto' ? proyectos :
                     filter === 'asignatura' ? asignaturas :
-                    filter === 'profesor' ? profesores :
-                    filter === 'mes' ? Array.from({ length: 12 }, (_, i) => i + 1) : []
+                    filter === 'profesor' ? profesores : []
                   ).map((item, idx) => (
                     <MenuItem key={idx} value={item}>
-                      {filter === 'mes' ? new Date(0, item - 1).toLocaleString('default', { month: 'long' }) : item}
+                      {item}
                     </MenuItem>
                   ))}
                 </Select>
