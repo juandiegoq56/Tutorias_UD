@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import 'react-toastify/dist/ReactToastify.css';
+import { formatInTimeZone } from 'date-fns-tz';
 import {
   Table,
   TableBody,
@@ -33,15 +34,18 @@ const HistorialTutorias = () => {
     asignatura: '',
     profesor: ''
   });
-  const isTutoriaFutura = (tutoria) => {
-    const now = new Date();
-    const tutoriaFecha = new Date(tutoria.fecha);
+  const COLOMBIA_TIMEZONE = 'America/Bogota';
+
+const isTutoriaFutura = (tutoria) => {
     const [horaInicio, minutosInicio] = tutoria.horaInicio.split(':');
-    
+    const tutoriaFecha = new Date(tutoria.fecha);
     tutoriaFecha.setHours(parseInt(horaInicio), parseInt(minutosInicio), 0);
     
-    return tutoriaFecha > now;
-  };
+    const nowInColombia = new Date(formatInTimeZone(new Date(), COLOMBIA_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss"));
+    const tutoriaInColombia = new Date(formatInTimeZone(tutoriaFecha, COLOMBIA_TIMEZONE, "yyyy-MM-dd'T'HH:mm:ss"));
+    
+    return tutoriaInColombia > nowInColombia;
+};
 
 
   const fetchTutorias = async () => {
