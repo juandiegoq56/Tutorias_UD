@@ -50,40 +50,53 @@ exports.getTutoringProfesor = (req, res) => {
   });
 }
 
-exports.getTutoringCoordinador = (req, res) => {
-  const { coordinadorId } = req.query;
+exports.getTutoringCoordinador = async (req, res) => {
+  try {
+    const { coordinadorId } = req.query;
 
-  if (!coordinadorId) {
-    return res.status(400).json({ error: 'Se requiere el ID del coordinador' });
-  }
-
-  // Buscar el proyecto del coordinador
-  const proyecto = coordinadores.coordinadores[coordinadorId]?.proyecto;
-
-  if (!proyecto) {
-    return res.status(404).json({ error: 'Coordinador no encontrado',coordinadorId });
-  }
-
-  // Consulta SQL para obtener las tutorías del proyecto
-  const sql = `
-    SELECT ti.tutoriaId, ti.estudianteCod, T.titulo, T.descripcion,T.link_reunion,T.sede_salon,
-    T.fecha, T.horaInicio, T.horaFin, CONCAT(E.nombre, ' ', E.apellido) AS estudiante, 
-    m.nombre AS asignatura, m.facultad, m.proyecto, T.grupo, 
-    CONCAT(p.nombre, ' ', p.apellido) AS profesor
-    FROM tutoriasestudiantes ti
-    JOIN tutorias T ON ti.tutoriaId = T.id
-    JOIN estudiantes E ON ti.estudianteCod = E.codigo
-    JOIN materias m ON T.materiaCod = m.codigo
-    JOIN profesores p ON T.profesorCod = p.codigo
-    WHERE m.proyecto = ?
-  `;
-
-  connection.query(sql, [proyecto], (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.status(500).json({ error: 'Error al obtener las tutorías' });
+    if (!coordinadorId) {
+      return res.status(400).json({ error: 'Se requiere el ID del coordinador' });
     }
-    res.json(results);
-    console.log(proyecto)
-  });
-}
+
+    // Obtener el proyecto del coordinador desde la tabla rol
+    const [roles] = await connection.promise().execute(
+      'SELECT proyecto FROM rol WHERE identificacion = ? AND rol = 2',
+      [coordinadorId]
+    );
+
+    if (!roles || roles.length === 0) {
+      return res.status(404).json({ 
+        error: 'Coordinador no encontrado o no tiene permisos de coordinador',
+        coordinadorId 
+      });
+    }
+
+    const proyecto = roles[0].proyecto;
+
+    // Consulta SQL para obtener las tutorías del proyecto
+    const sql = `
+      SELECT ti.tutoriaId, ti.estudianteCod, T.titulo, T.descripcion, T.link_reunion, T.sede_salon,
+      T.fecha, T.horaInicio, T.horaFin, CONCAT(E.nombre, ' ', E.apellido) AS estudiante, 
+      m.nombre AS asignatura, m.facultad, m.proyecto, T.grupo, 
+      CONCAT(p.nombre, ' ', p.apellido) AS profesor
+      FROM tutoriasestudiantes ti
+      JOIN tutorias T ON ti.tutoriaId = T.id
+      JOIN estudiantes E ON ti.estudianteCod = E.codigo
+      JOIN materias m ON T.materiaCod = m.codigo
+      JOIN profesores p ON T.profesorCod = p.codigo
+      WHERE m.proyecto = ?
+    `;
+
+    const [tutorias] = await connection.promise().execute(sql, [proyecto]);
+    
+    res.json(tutorias);
+    console.log('Proyecto:', proyecto);
+
+  } catch (error) {
+    console.error('Error en getTutoringCoordinador:', error);
+    res.status(500).json({ 
+      error: 'Error al obtener las tutorías',
+      message: error.message 
+    });
+  }
+};

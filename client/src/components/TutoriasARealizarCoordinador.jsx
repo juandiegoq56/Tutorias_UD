@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import 'react-toastify/dist/ReactToastify.css';
 import {
   Table,
   TableBody,
@@ -15,44 +16,60 @@ import {
   InputLabel,
 } from '@mui/material';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import '../css/HistorialTutorias.css';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import DetallesTutoria from './DetallesTutorias';
+import NuevaTutoria from './EditarTutoria';
 
 const HistorialTutorias = () => {
   const { profesorId } = useParams();
   const [tutorias, setTutorias] = useState([]);
-  const [selectedTutoria, setSelectedTutoria] = useState(null);
   const [facultades, setFacultades] = useState([]);
+  const [selectedTutoria, setSelectedTutoria] = useState(null);
+  const [isEditing, setIsEditing] = useState(false);
   const [filters, setFilters] = useState({
     facultad: '',
     proyecto: '',
     asignatura: '',
-    grupo: '',
+    profesor: ''
   });
-
-  const isTutoriaPasada = (tutoria) => {
+  const isTutoriaFutura = (tutoria) => {
     const now = new Date();
     const tutoriaFecha = new Date(tutoria.fecha);
-    const [horaFin, minutosFin] = tutoria.horaFin.split(':');
-    tutoriaFecha.setHours(parseInt(horaFin), parseInt(minutosFin), 0);
-    return tutoriaFecha < now;
+    const [horaInicio, minutosInicio] = tutoria.horaInicio.split(':');
+    
+    tutoriaFecha.setHours(parseInt(horaInicio), parseInt(minutosInicio), 0);
+    
+    return tutoriaFecha > now;
   };
 
-  useEffect(() => {
-    fetch(`http://localhost:3001/api/tutoring/tutoriasProfesor?profesorId=${profesorId}`)
-      .then(response => response.json())
-      .then(data => {
-        const uniqueTutorias = groupStudentsByTutoriaId(data);
-        // Filtrar solo tutorías pasadas y ordenar por fecha más reciente
-        const tutoriasPasadas = uniqueTutorias
-          .filter(isTutoriaPasada)
-          .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
-        
-        setTutorias(tutoriasPasadas);
-        const facultadesUnicas = new Set(tutoriasPasadas.map(tutoria => tutoria.facultad));
-        setFacultades(Array.from(facultadesUnicas));
+
+  const fetchTutorias = async () => {
+    try {
+      const response = await fetch(`http://localhost:3001/api/tutoring/tutoriaCoordinador?coordinadorId=${profesorId}`);
+      const data = await response.json();
+      const uniqueTutorias = groupStudentsByTutoriaId(data);
+      
+      // Filtrar solo las tutorías futuras
+      const tutoriasFuturas = uniqueTutorias.filter(isTutoriaFutura);
+      
+      // Ordenar por fecha más próxima primero
+      tutoriasFuturas.sort((a, b) => {
+        const fechaA = new Date(a.fecha + ' ' + a.horaInicio);
+        const fechaB = new Date(b.fecha + ' ' + b.horaInicio);
+        return fechaA - fechaB;
       });
-  }, [profesorId]);
+      
+      setTutorias(tutoriasFuturas);
+      const facultadesUnicas = new Set(tutoriasFuturas.map(tutoria => tutoria.facultad));
+      setFacultades(Array.from(facultadesUnicas));
+    } catch (error) {
+      console.error('Error al cargar las tutorías:', error);
+    }
+  };
+  useEffect(() => {
+    fetchTutorias();
+  }, []);
 
   const groupStudentsByTutoriaId = (array) => {
     const grouped = array.reduce((acc, curr) => {
@@ -66,7 +83,6 @@ const HistorialTutorias = () => {
       });
       return acc;
     }, {});
-  
     return Object.values(grouped);
   };
 
@@ -76,21 +92,17 @@ const HistorialTutorias = () => {
       const newFilters = { ...prevFilters, [name]: value };
 
       // Reset dependent filters
-      switch (name) {
-        case 'facultad':
-          newFilters.proyecto = '';
-          newFilters.asignatura = '';
-          newFilters.grupo = '';
-          break;
-        case 'proyecto':
-          newFilters.asignatura = '';
-          newFilters.grupo = '';
-          break;
-        case 'asignatura':
-          newFilters.grupo = '';
-          break;
-        default:
-          break;
+      if (name === 'facultad') {
+        newFilters.proyecto = '';
+        newFilters.asignatura = '';
+        newFilters.profesor = '';
+      }
+      if (name === 'proyecto') {
+        newFilters.asignatura = '';
+        newFilters.profesor = '';
+      }
+      if (name === 'asignatura') {
+        newFilters.profesor = '';
       }
 
       return newFilters;
@@ -101,8 +113,36 @@ const HistorialTutorias = () => {
     setSelectedTutoria(tutoria);
   };
 
+  const handleEditClick = (tutoria) => {
+    setSelectedTutoria(tutoria);
+    setIsEditing(true);
+  };
+
+  const handleDeleteClick = async (tutoriaId, onTutoriaDelete = () => {}) => {
+    const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar esta tutoría?");
+    if (confirmDelete) {
+      try {
+        const response = await fetch(`http://localhost:3001/api/tutoring/tutorias/${tutoriaId}`, {
+          method: 'DELETE',
+        });
+  
+        if (response.ok) {
+          setTutorias(tutorias.filter(tutoria => tutoria.tutoriaId !== tutoriaId));
+          alert('Tutoría eliminada con éxito.');
+          onTutoriaDelete();
+        } else {
+          alert('Error al eliminar la tutoría.');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('Error de conexión con el servidor.');
+      }
+    }
+  };
+
   const handleVolverClick = () => {
     setSelectedTutoria(null);
+    setIsEditing(false);
   };
 
   const getUniqueItems = (field, filters = {}) => {
@@ -125,25 +165,34 @@ const HistorialTutorias = () => {
       (filters.facultad === '' || tutoria.facultad === filters.facultad) &&
       (filters.proyecto === '' || tutoria.proyecto === filters.proyecto) &&
       (filters.asignatura === '' || tutoria.asignatura === filters.asignatura) &&
-      (filters.grupo === '' || tutoria.grupo === filters.grupo)
+      (filters.profesor === '' || tutoria.profesor === filters.profesor)
     );
   });
 
-  const proyectos = getUniqueItems('proyecto', { facultad: filters.facultad });
   const asignaturas = getUniqueItems('asignatura', { facultad: filters.facultad, proyecto: filters.proyecto });
-  const grupos = getUniqueItems('grupo', { facultad: filters.facultad, proyecto: filters.proyecto, asignatura: filters.asignatura });
+  const profesores = getUniqueItems('profesor', { facultad: filters.facultad, asignatura: filters.asignatura, proyecto: filters.proyecto });
+  const proyectos = getUniqueItems('proyecto', { facultad: filters.facultad });
 
   return (
     <div>
       {selectedTutoria ? (
-        <DetallesTutoria tutoria={selectedTutoria} onVolverClick={handleVolverClick} />
+        isEditing ? (
+          <NuevaTutoria
+            tutoria={selectedTutoria}
+            onVolverClick={handleVolverClick}
+            onTutoriaUpdated={fetchTutorias}
+            onTutoriaDelete={fetchTutorias}
+          />
+        ) : (
+          <DetallesTutoria tutoria={selectedTutoria} onVolverClick={handleVolverClick} />
+        )
       ) : (
         <div className="historial-tutorias" id="contenido">
           <a href="#contenido" className="skip-to-content">Saltar al contenido</a>
-          <h1>Tutorías Realizadas ({tutoriasFiltradas.length})</h1>
-          <p>Historial de tutorías hasta {new Date().toLocaleDateString()}</p>
+          <h1>Tutorías por Realizar ({tutoriasFiltradas.length})</h1>
+          <p>Tutorías programadas a partir de {new Date().toLocaleDateString()}</p>
           <div className="filtros" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {['facultad', 'proyecto', 'asignatura', 'grupo'].map((filter, index) => (
+            {['facultad', 'proyecto', 'asignatura', 'profesor'].map((filter, index) => (
               <FormControl variant="outlined" margin="normal" key={index} style={{ minWidth: 120 }}>
                 <InputLabel id={`${filter}-label`}>{filter.charAt(0).toUpperCase() + filter.slice(1)}</InputLabel>
                 <Select
@@ -158,9 +207,11 @@ const HistorialTutorias = () => {
                   {(filter === 'facultad' ? facultades :
                     filter === 'proyecto' ? proyectos :
                     filter === 'asignatura' ? asignaturas :
-                    filter === 'grupo' ? grupos : []
+                    filter === 'profesor' ? profesores : []
                   ).map((item, idx) => (
-                    <MenuItem key={idx} value={item}>{item}</MenuItem>
+                    <MenuItem key={idx} value={item}>
+                      {item}
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
@@ -191,9 +242,17 @@ const HistorialTutorias = () => {
                     <TableCell>{tutoria.grupo}</TableCell>
                     <TableCell>{new Date(tutoria.fecha).toLocaleDateString()}</TableCell>
                     <TableCell>
-                      <IconButton onClick={() => handleTutoriaClick(tutoria)} style={{ color: '#0094DC' }}>
-                        <VisibilityIcon />
-                      </IconButton>
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <IconButton style={{  color:'#0094DC'}} onClick={() => handleTutoriaClick(tutoria)}>
+                          <VisibilityIcon />
+                        </IconButton>
+                        <IconButton style={{  color: '#32CD32'}}  onClick={() => handleEditClick(tutoria)}>
+                          <EditIcon />
+                        </IconButton>
+                        <IconButton color="error" onClick={() => handleDeleteClick(tutoria.tutoriaId)}>
+                          <DeleteIcon />
+                        </IconButton>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}

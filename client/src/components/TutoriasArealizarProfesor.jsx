@@ -30,12 +30,12 @@ const HistorialTutorias = () => {
     grupo: '',
   });
 
-  const isTutoriaPasada = (tutoria) => {
+  const isTutoriaFutura = (tutoria) => {
     const now = new Date();
     const tutoriaFecha = new Date(tutoria.fecha);
-    const [horaFin, minutosFin] = tutoria.horaFin.split(':');
-    tutoriaFecha.setHours(parseInt(horaFin), parseInt(minutosFin), 0);
-    return tutoriaFecha < now;
+    const [horaInicio, minutosInicio] = tutoria.horaInicio.split(':');
+    tutoriaFecha.setHours(parseInt(horaInicio), parseInt(minutosInicio), 0);
+    return tutoriaFecha > now;
   };
 
   useEffect(() => {
@@ -43,13 +43,13 @@ const HistorialTutorias = () => {
       .then(response => response.json())
       .then(data => {
         const uniqueTutorias = groupStudentsByTutoriaId(data);
-        // Filtrar solo tutorías pasadas y ordenar por fecha más reciente
-        const tutoriasPasadas = uniqueTutorias
-          .filter(isTutoriaPasada)
-          .sort((a, b) => new Date(b.fecha) - new Date(a.fecha));
+        // Filtrar solo tutorías futuras y ordenar por fecha más próxima
+        const tutoriasFuturas = uniqueTutorias
+          .filter(isTutoriaFutura)
+          .sort((a, b) => new Date(a.fecha) - new Date(b.fecha));
         
-        setTutorias(tutoriasPasadas);
-        const facultadesUnicas = new Set(tutoriasPasadas.map(tutoria => tutoria.facultad));
+        setTutorias(tutoriasFuturas);
+        const facultadesUnicas = new Set(tutoriasFuturas.map(tutoria => tutoria.facultad));
         setFacultades(Array.from(facultadesUnicas));
       });
   }, [profesorId]);
@@ -140,8 +140,8 @@ const HistorialTutorias = () => {
       ) : (
         <div className="historial-tutorias" id="contenido">
           <a href="#contenido" className="skip-to-content">Saltar al contenido</a>
-          <h1>Tutorías Realizadas ({tutoriasFiltradas.length})</h1>
-          <p>Historial de tutorías hasta {new Date().toLocaleDateString()}</p>
+          <h1>Próximas Tutorías ({tutoriasFiltradas.length})</h1>
+          <p>Tutorías programadas a partir de {new Date().toLocaleDateString()}</p>
           <div className="filtros" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {['facultad', 'proyecto', 'asignatura', 'grupo'].map((filter, index) => (
               <FormControl variant="outlined" margin="normal" key={index} style={{ minWidth: 120 }}>

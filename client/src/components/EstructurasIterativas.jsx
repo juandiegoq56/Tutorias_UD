@@ -32,14 +32,25 @@ const HistorialTutorias = () => {
     asignatura: '',
     profesor: ''
   });
-
+  const isTutoriaPasada = (tutoria) => {
+    const now = new Date();
+    const tutoriaFecha = new Date(tutoria.fecha);
+    const [horaFin, minutosFin] = tutoria.horaFin.split(':');
+    
+    tutoriaFecha.setHours(parseInt(horaFin), parseInt(minutosFin), 0);
+    
+    return tutoriaFecha < now;
+  };
+  
   const fetchTutorias = async () => {
     try {
-      const response = await fetch('http://localhost:3001/api/tutoring/tutorias'); // cambiar por la direccion de la Api.
+      const response = await fetch('http://localhost:3001/api/tutoring/tutorias');
       const data = await response.json();
       const uniqueTutorias = groupStudentsByTutoriaId(data);
-      setTutorias(uniqueTutorias);
-      const facultadesUnicas = new Set(uniqueTutorias.map(tutoria => tutoria.facultad));
+      // Filtrar solo las tutorías que ya han pasado
+      const tutoriasPasadas = uniqueTutorias.filter(isTutoriaPasada);
+      setTutorias(tutoriasPasadas);
+      const facultadesUnicas = new Set(tutoriasPasadas.map(tutoria => tutoria.facultad));
       setFacultades(Array.from(facultadesUnicas));
     } catch (error) {
       console.error('Error al cargar las tutorías:', error);
@@ -169,7 +180,7 @@ const HistorialTutorias = () => {
         <div className="historial-tutorias" id="contenido">
           <a href="#contenido" className="skip-to-content">Saltar al contenido</a>
           <h1>Tutorías Realizadas ({tutoriasFiltradas.length})</h1>
-          <p>Tutorias realizadas a la fecha</p>
+          <p>Tutorías finalizadas a la fecha {new Date().toLocaleDateString()}</p>
           <div className="filtros" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
             {['facultad', 'proyecto', 'asignatura', 'profesor'].map((filter, index) => (
               <FormControl variant="outlined" margin="normal" key={index} style={{ minWidth: 120 }}>

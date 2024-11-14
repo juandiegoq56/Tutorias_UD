@@ -40,6 +40,15 @@ const MenuProfesor = ({ setView, view }) => {
                 Nueva Tutoría
               </button>
             </li>
+            
+            <li className={`nav-item ${view === 'tutoria futura' ? 'active' : ''}`}>
+              <button
+                className="nav-link btn"
+                onClick={() => { setView('tutoria futura'); setIsOpen(false); }}
+              >
+                Tutorías a Realizar
+              </button>
+            </li>
           </ul>
         </div>
       </div>

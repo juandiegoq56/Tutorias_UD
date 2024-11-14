@@ -1,34 +1,64 @@
 const generateToken = require('../config/auth');
 const profesores = require('../../../client/src/Data/profesorIdentificaciones.json');
-const admin = require('../../../client/src/Data/adminid.json');
-const coordinadores = require('../../../client/src/Data/coordinadorAdmin.json'); // Asegúrate de tener la ruta correcta
+const connection = require('../config/db'); 
 
-exports.login = (req, res) => {
-  const { profesorId } = req.body;
+exports.login = async (req, res) => {
+  try {
+    const { profesorId } = req.body;
+    const profesorIdNum = Number(profesorId);
+    
+    connection.execute(
+      'SELECT rol FROM rol WHERE identificacion = ?',
+      [profesorIdNum],
+      (error, roles) => {
+        if (error) {
+          console.error('Error en la consulta:', error);
+          return res.status(500).json({ 
+            error: 'Error interno del servidor', 
+            message: error.message 
+          });
+        }
 
-  // Convertir profesorId a número
-  const profesorIdNum = Number(profesorId);
-  console.log(profesorIdNum);
+        // Comprobar si el profesor existe en la lista de IDs de profesores
+        const profesorExists = profesores.includes(profesorIdNum);
+        
+        if (profesorExists || roles.length > 0) {
+          const token = generateToken(profesorIdNum);
+          let role = 'profesor';
+          let proyecto = null;
 
-  // Comprobar si el profesor existe en la lista de IDs de profesores
-  const profesorExists = profesores.includes(profesorIdNum);
-  // Comprobar si el profesor existe en la lista de IDs de administradores
-  const adminExists = admin.includes(profesorIdNum);
-  // Comprobar si el profesor existe en la lista de IDs de coordinadores
-  const coordinadorExists = coordinadores.coordinadores.hasOwnProperty(profesorId);
+          if (roles.length > 0) {
+            const userRole = roles[0];
+            
+            if (userRole.rol === 1) {
+              role = 'admin';
+            } else if (userRole.rol === 2) {
+              role = 'coordinador';
+              proyecto = userRole.proyecto;
+            }
+          }
 
-  if (profesorExists || adminExists || coordinadorExists) {
-    const token = generateToken(profesorIdNum); // Generar token si el usuario existe
-    let role = 'profesor';
+          const response = {
+            token,
+            role,
+            ...(proyecto && { proyecto })
+          };
 
-    if (adminExists) {
-      role = 'admin';
-    } else if (coordinadorExists) {
-      role = 'coordinador';
-    }
+          res.json(response);
+        } else {
+          res.status(401).json({ 
+            error: 'Sin acceso a la página', 
+            profesorId 
+          });
+        }
+      }
+    );
 
-    res.json({ token, role }); // Devolver token y rol
-  } else {
-    res.status(401).json({ error: 'Sin acceso a la página', profesorId }); // Retornar error si el profesorId no coincide
+  } catch (error) {
+    console.error('Error en login:', error);
+    res.status(500).json({ 
+      error: 'Error interno del servidor', 
+      message: error.message 
+    });
   }
 };

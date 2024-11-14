@@ -10,6 +10,9 @@ import HistorialTutorias from './tutoriasRealizadaProfesor';
 import HistorialProyecto from './TutoriasProyecto';
 import NuevaTutoriaCoordinador from './NuevatutoriaCoordinador';
 import SeguimientoTutoriasCoordinador from './SeguimientoCoordinador';
+import TutoriasARealizar from './TutoriasARealizar';
+import TutoriasARealizarCoordinador from './TutoriasARealizarCoordinador';
+import TutoriasARealizarProfesor from './TutoriasArealizarProfesor'
 import '../App.css';
 
 const MainContent = () => {
@@ -28,8 +31,9 @@ const MainContent = () => {
       setView('estructuras');
     } else if (role === 'profesor') {
       setView('Tutorías Realizadas');
-    } else if (role === 'coordinador')
+    } else if (role === 'coordinador') {
       setView('estructuras')
+    }
   };
 
   const handleRoleChange = (newRole) => {
@@ -48,6 +52,8 @@ const MainContent = () => {
           return <NuevaTutoria />;
         case 'seguimiento':
           return <SeguimientoTutorias />;
+        case 'tutoria futura':
+          return <TutoriasARealizar  />;
         default:
           return null;
       }
@@ -57,6 +63,8 @@ const MainContent = () => {
           return <HistorialTutorias />;
           case 'nueva tutoria':
           return <Dashboard />;
+          case 'tutoria futura':
+          return <TutoriasARealizarProfesor />
         default:
           return null;
       }
@@ -68,6 +76,8 @@ const MainContent = () => {
           return <NuevaTutoriaCoordinador/>
         case 'seguimiento':
           return <SeguimientoTutoriasCoordinador/>
+        case 'tutoria futura':
+          return <TutoriasARealizarCoordinador />
       }
     }
 
